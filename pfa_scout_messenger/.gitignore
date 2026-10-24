@@ -1,0 +1,10 @@
+# פרופיל הכרום מכיל את סשן ההתחברות ל-WhatsApp — אסור להעלות אותו
+chrome_profile/
+
+# קבצי סקאוטים ודוחות (מידע אישי)
+*.xlsx
+pfa_results_*.csv
+
+__pycache__/
+.venv/
+venv/

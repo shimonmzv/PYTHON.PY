@@ -1,0 +1,4 @@
+streamlit>=1.50
+selenium>=4.20
+pandas>=2.0
+openpyxl>=3.1
