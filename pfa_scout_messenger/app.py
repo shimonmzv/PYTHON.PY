@@ -21,11 +21,12 @@ from selenium import webdriver
 from selenium.common.exceptions import (
     InvalidSessionIdException,
     NoSuchWindowException,
+    StaleElementReferenceException,
     TimeoutException,
     WebDriverException,
 )
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 # ============================================================
@@ -35,10 +36,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 WHATSAPP_URL = "https://web.whatsapp.com"
 SEND_URL_TEMPLATE = "https://web.whatsapp.com/send?phone={phone}&text={text}"
 
-# כפתור השליחה. הביטוי הראשון הוא זה שנדרש באפיון; השני מכסה גרסאות חדשות
+# כפתור השליחה. הביטוי הראשון הוא זה שנדרש באפיון; השאר מכסים גרסאות חדשות
 # של WhatsApp Web שבהן שם האייקון שונה. אם WhatsApp ישנו את ה-DOM — מעדכנים כאן.
 SEND_BUTTON_XPATH = (
-    '//span[@data-icon="send"] | //span[@data-icon="wds-ic-send-filled"]'
+    '//span[@data-icon="send"]'
+    ' | //span[contains(@data-icon, "send")]'
+    ' | //button[@aria-label="Send" or @aria-label="שליחה" or @aria-label="שלח"]'
+)
+
+# תיבת כתיבת ההודעה בצ'אט הפתוח (שם WhatsApp מזריק את הטקסט מה-URL)
+COMPOSER_XPATH = (
+    '//footer//div[@contenteditable="true"]'
+    ' | //div[@id="main"]//div[@contenteditable="true"]'
 )
 
 # אלמנט שמופיע רק אחרי התחברות מוצלחת (רשימת הצ'אטים בצד)
@@ -57,8 +66,11 @@ ANTI_SPAM_DELAY_RANGE = (25, 45)
 # השהיה קצרה אחרי כישלון, כדי לא להעמיס על WhatsApp Web
 FAILURE_PAUSE_SECONDS = 5
 
-# זמן המתנה לכך שההודעה תעזוב את תיבת הכתיבה אחרי הלחיצה על "שלח"
-SEND_CONFIRM_TIMEOUT = 15
+# זמן קצר לאחר טעינת הצ'אט לפני השליחה — לחיצה מוקדמת מדי נבלעת ע"י WhatsApp
+PRE_SEND_PAUSE_SECONDS = 1.5
+
+# זמן המתנה (לכל ניסיון שליחה) לכך שההודעה תעזוב את תיבת הכתיבה
+SEND_CONFIRM_TIMEOUT = 6
 
 # זמן נוסף לאחר השליחה כדי לאפשר להודעה לעבור לשרת לפני מעבר לצ'אט הבא
 POST_SEND_PAUSE_SECONDS = 3
@@ -195,34 +207,97 @@ def is_logged_in(driver: webdriver.Chrome) -> bool:
     return bool(driver.find_elements(By.CSS_SELECTOR, LOGGED_IN_CSS))
 
 
+def _message_pending(driver: webdriver.Chrome) -> bool:
+    """
+    האם יש הודעה שממתינה לשליחה בתיבת הכתיבה (אחרי שליחה מוצלחת התיבה מתרוקנת).
+    אם תיבת הכתיבה לא נמצאה בכלל — מסתמכים על כך שכפתור השליחה גלוי.
+    """
+    boxes = driver.find_elements(By.XPATH, COMPOSER_XPATH)
+    if boxes:
+        return any(box.text.strip() for box in boxes)
+    return any(btn.is_displayed() for btn in driver.find_elements(By.XPATH, SEND_BUTTON_XPATH))
+
+
+def _wait_until_sent(driver: webdriver.Chrome) -> bool:
+    """ממתין שההודעה תעזוב את תיבת הכתיבה. מחזיר True אם נשלחה."""
+    try:
+        WebDriverWait(
+            driver, SEND_CONFIRM_TIMEOUT, ignored_exceptions=(StaleElementReferenceException,)
+        ).until(lambda d: not _message_pending(d))
+        return True
+    except TimeoutException:
+        return False
+
+
+def _click_send_button(driver: webdriver.Chrome) -> bool:
+    """לוחץ על כפתור השליחה. מחזיר False אם הכפתור לא נמצא."""
+    for icon in driver.find_elements(By.XPATH, SEND_BUTTON_XPATH):
+        if not icon.is_displayed():
+            continue
+        # לחיצה על הכפתור עצמו ולא על האייקון שבתוכו — לחיצה על האייקון לפעמים לא נקלטת
+        buttons = icon.find_elements(
+            By.XPATH, './ancestor-or-self::*[self::button or @role="button"][1]'
+        )
+        target = buttons[0] if buttons else icon
+        try:
+            target.click()
+        except (NoSuchWindowException, InvalidSessionIdException):
+            raise
+        except WebDriverException:
+            # למשל כשאלמנט אחר מסתיר את הכפתור — לחיצה ישירה דרך JavaScript
+            driver.execute_script("arguments[0].click();", target)
+        return True
+    return False
+
+
+def _press_enter(driver: webdriver.Chrome) -> bool:
+    """שולח את ההודעה בלחיצת Enter בתיבת הכתיבה. מחזיר False אם התיבה ריקה או לא נמצאה."""
+    boxes = [box for box in driver.find_elements(By.XPATH, COMPOSER_XPATH) if box.text.strip()]
+    if not boxes:
+        return False
+    boxes[-1].send_keys(Keys.ENTER)
+    return True
+
+
 def send_message(
     driver: webdriver.Chrome, phone: str, message: str, timeout: int
-) -> None:
+) -> str:
     """
-    פותח צ'אט ישירות דרך כתובת URL עם ההודעה מוזרקת, ממתין לכפתור השליחה ולוחץ עליו.
-    זורק TimeoutException אם הצ'אט לא נטען (למשל: מספר לא רשום ב-WhatsApp).
+    פותח צ'אט ישירות דרך כתובת URL עם ההודעה מוזרקת ושולח אותה.
+    שיטת השליחה: לחיצה על כפתור השליחה, ואם WhatsApp לא הגיב — Enter בתיבת הכתיבה.
+    מחזיר את שם השיטה שעבדה.
+    זורק TimeoutException אם הצ'אט לא נטען (למשל: מספר לא רשום ב-WhatsApp),
+    ו-MessageNotSentError אם ההודעה הוקלדה אך לא נשלחה.
     """
     encoded_message = quote(message, safe="")
     driver.get(SEND_URL_TEMPLATE.format(phone=phone, text=encoded_message))
 
-    # הופעת כפתור השליחה מוכיחה שהצ'אט נטען והטקסט הוזרק לתיבת הכתיבה
-    send_button = WebDriverWait(driver, timeout).until(
-        EC.element_to_be_clickable((By.XPATH, SEND_BUTTON_XPATH))
-    )
-    send_button.click()
+    # הצ'אט מוכן כשההודעה המוזרקת מופיעה בתיבת הכתיבה / כפתור השליחה מופיע
+    WebDriverWait(
+        driver, timeout, ignored_exceptions=(StaleElementReferenceException,)
+    ).until(_message_pending)
+    time.sleep(PRE_SEND_PAUSE_SECONDS)
 
-    # אישור שהלחיצה נקלטה: אחרי שליחה תיבת הכתיבה מתרוקנת וכפתור השליחה נעלם
-    WebDriverWait(driver, SEND_CONFIRM_TIMEOUT).until(
-        EC.invisibility_of_element_located((By.XPATH, SEND_BUTTON_XPATH))
-    )
+    for method_name, attempt in (("כפתור שליחה", _click_send_button), ("Enter", _press_enter)):
+        try:
+            acted = attempt(driver)
+        except StaleElementReferenceException:
+            continue  # הדף התעדכן בדיוק ברגע הלחיצה — עוברים לשיטה הבאה
+        if acted and _wait_until_sent(driver):
+            # זמן קצר לסנכרון ההודעה מול השרת לפני מעבר לצ'אט הבא
+            time.sleep(POST_SEND_PAUSE_SECONDS)
+            return method_name
 
-    # זמן קצר לסנכרון ההודעה מול השרת לפני מעבר לצ'אט הבא
-    time.sleep(POST_SEND_PAUSE_SECONDS)
+    raise MessageNotSentError
 
 
 # ============================================================
 # רכיבי ממשק
 # ============================================================
+
+class MessageNotSentError(Exception):
+    """הצ'אט נטען וההודעה הוקלדה, אבל היא לא יצאה גם אחרי כל ניסיונות השליחה."""
+
 
 class LiveLog:
     """יומן ריצה שמתעדכן בזמן אמת בתוך placeholder של Streamlit (הרשומה החדשה למעלה)."""
@@ -331,7 +406,7 @@ def run_automation(
             message = build_message(template, name)
 
             try:
-                send_message(driver, phone, message, chat_timeout)
+                method = send_message(driver, phone, message, chat_timeout)
             except TimeoutException:
                 # מספר לא תקין / לא רשום ב-WhatsApp / הצ'אט לא נטען בזמן
                 log.error(
@@ -340,6 +415,13 @@ def run_automation(
                 )
                 results.append({"שם": name, "טלפון": phone, "סטטוס": "נכשל — לא נטען"})
                 time.sleep(FAILURE_PAUSE_SECONDS)
+            except MessageNotSentError:
+                log.error(
+                    f"{name} ({phone}): ההודעה הוקלדה אך WhatsApp לא שלח אותה "
+                    "(לא בלחיצה על כפתור השליחה ולא ב-Enter). ממשיך לשורה הבאה."
+                )
+                results.append({"שם": name, "טלפון": phone, "סטטוס": "נכשל — לא נשלח"})
+                time.sleep(FAILURE_PAUSE_SECONDS)
             except (NoSuchWindowException, InvalidSessionIdException):
                 raise  # הדפדפן נסגר — אין טעם להמשיך לשורות הבאות
             except WebDriverException as exc:
@@ -347,7 +429,7 @@ def run_automation(
                 results.append({"שם": name, "טלפון": phone, "סטטוס": "נכשל — שגיאה"})
                 time.sleep(FAILURE_PAUSE_SECONDS)
             else:
-                log.success(f"ההודעה נשלחה אל {name} ({phone}).")
+                log.success(f"ההודעה נשלחה אל {name} ({phone}) [שיטה: {method}].")
                 results.append({"שם": name, "טלפון": phone, "סטטוס": "נשלח"})
 
                 # השהיה אקראית נגד ספאם אחרי כל שליחה מוצלחת (לא אחרי האחרונה)
