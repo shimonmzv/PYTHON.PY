@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>PFA Scout Messenger – מדריך התקנה והפעלה</title>
+<style>
+  @font-face {
+    font-family: "Heebo";
+    src: url("fonts/Heebo.ttf") format("truetype");
+    font-weight: 100 900;
+  }
+  @page { size: A4; margin: 16mm 17mm 16mm 17mm; }
+  :root {
+    --navy: #1F4E79;
+    --navy-soft: #E8EFF7;
+    --ink: #1d2433;
+    --muted: #5b6475;
+    --amber: #B45309;
+    --amber-soft: #FEF5E7;
+    --red: #B42318;
+    --red-soft: #FDECEA;
+    --green: #1E7B4A;
+    --green-soft: #EAF6EF;
+    --line: #D6DEE8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Heebo", "Arial", sans-serif;
+    direction: rtl;
+    color: var(--ink);
+    font-size: 10.8pt;
+    line-height: 1.65;
+    margin: 0;
+  }
+  h1, h2, h3 { color: var(--navy); line-height: 1.3; }
+  h2 {
+    font-size: 17pt;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--navy);
+    break-after: avoid;
+  }
+  h3 { font-size: 13pt; margin: 18px 0 6px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 10px; padding-inline-start: 22px; }
+  li { margin-bottom: 4px; }
+  section { margin-bottom: 22px; }
+  .page-break { break-before: page; }
+
+  /* LTR fragments: file names, URLs, numbers, English UI labels */
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+  .code {
+    direction: ltr; unicode-bidi: isolate;
+    font-family: "Consolas", "DejaVu Sans Mono", monospace;
+    font-size: 9.6pt;
+    background: #F1F4F8; border: 1px solid var(--line);
+    border-radius: 4px; padding: 0 5px;
+  }
+  .ui { font-weight: 700; color: var(--navy); }
+
+  /* cover */
+  .cover {
+    background: var(--navy); color: #fff;
+    border-radius: 14px; padding: 30px 32px 26px; margin-bottom: 22px;
+  }
+  .cover h1 { color: #fff; font-size: 27pt; margin: 0 0 4px; }
+  .cover .sub { font-size: 14pt; opacity: .92; margin: 0 0 14px; }
+  .cover .meta { font-size: 10pt; opacity: .8; margin: 0; }
+
+  /* boxes */
+  .box { border-radius: 10px; padding: 11px 16px; margin: 10px 0 14px; break-inside: avoid; }
+  .box > :last-child { margin-bottom: 0; }
+  .box-title { font-weight: 700; margin-bottom: 4px; }
+  .tip  { background: var(--navy-soft); border-inline-start: 5px solid var(--navy); }
+  .warn { background: var(--amber-soft); border-inline-start: 5px solid var(--amber); }
+  .warn .box-title { color: var(--amber); }
+  .danger { background: var(--red-soft); border-inline-start: 5px solid var(--red); }
+  .danger .box-title { color: var(--red); }
+  .ok { background: var(--green-soft); border-inline-start: 5px solid var(--green); }
+  .ok .box-title { color: var(--green); }
+
+  /* steps */
+  .step { display: flex; gap: 12px; align-items: flex-start; margin: 16px 0 6px; break-after: avoid; }
+  .step .num {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--navy); color: #fff; font-weight: 700; font-size: 13pt;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .step h3 { margin: 0; padding-top: 2px; }
+  .step-body { padding-inline-start: 42px; }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 10pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: start; vertical-align: top; }
+  th { background: var(--navy); color: #fff; font-weight: 700; }
+  tr { break-inside: avoid; }
+  tbody tr:nth-child(even) td { background: #F7F9FC; }
+
+  /* figures */
+  figure { margin: 10px 0 16px; break-inside: avoid; text-align: center; }
+  figure img {
+    max-width: 82%; max-height: 118mm;
+    border: 1px solid var(--line); border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  figcaption { font-size: 9.3pt; color: var(--muted); margin-top: 5px; }
+
+  .toc { columns: 2; column-gap: 26px; padding-inline-start: 20px; }
+  .footer-note { color: var(--muted); font-size: 9pt; text-align: center; margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>PFA Scout Messenger</h1>
+  <p class="sub">מדריך התקנה והפעלה למחשבי Windows</p>
+  <p class="meta">Premier Football Agency · שליחת הודעות WhatsApp אישיות לסקאוטים מתוך קובץ אקסל · גרסה 1.0, <span class="ltr">11/2026</span></p>
+</div>
+
+<section>
+  <h2>מה התוכנה עושה</h2>
+  <p>
+    התוכנה שולחת הודעת WhatsApp אישית לכל סקאוט שמופיע בקובץ אקסל, בלי לשמור את המספרים באנשי הקשר.
+    כותבים הודעה אחת, והתוכנה מחליפה בה את <span class="code">{name}</span> בשם של כל סקאוט ושולחת דרך WhatsApp Web.
+    בין הודעה להודעה יש הפסקה אקראית של 25 עד 45 שניות, כדי להקטין את הסיכון לחסימה.
+  </p>
+
+  <h3>מה יש בתיקייה</h3>
+  <table>
+    <thead><tr><th style="width:34%">קובץ</th><th>מה זה</th></tr></thead>
+    <tbody>
+      <tr><td><span class="code">PFA_Guide.pdf</span></td><td>המדריך הזה.</td></tr>
+      <tr><td><span class="code">START_PFA.bat</span></td><td><b>קובץ ההפעלה.</b> לחיצה כפולה עליו מפעילה את התוכנה. ייתכן שיופיע בשם <span class="code">START_PFA</span> בלבד, בלי הסיומת.</td></tr>
+      <tr><td><span class="code">scouts_template.xlsx</span></td><td>תבנית אקסל ריקה לרשימת הסקאוטים.</td></tr>
+      <tr><td><span class="code">app.py</span>, <span class="code">requirements.txt</span></td><td>קבצי התוכנה. <b>אין לשנות, לשנות שם או למחוק אותם.</b></td></tr>
+    </tbody>
+  </table>
+
+  <h3>מה צריך לפני שמתחילים</h3>
+  <ul>
+    <li>מחשב עם Windows 10 או Windows 11, וחיבור לאינטרנט.</li>
+    <li>הטלפון עם חשבון ה-WhatsApp שממנו יישלחו ההודעות.</li>
+    <li>דפדפן Google Chrome (שלב 3).</li>
+    <li>Python, תוכנה חינמית שמריצה את התוכנה (שלב 2). מתקינים אותה פעם אחת בלבד.</li>
+  </ul>
+
+  <h3>תוכן המדריך</h3>
+  <ol class="toc">
+    <li>חילוץ קובץ ה-ZIP</li>
+    <li>התקנת Python</li>
+    <li>התקנת Google Chrome</li>
+    <li>הפעלת התוכנה</li>
+    <li>הכנת רשימת הסקאוטים</li>
+    <li>שליחת ההודעות</li>
+    <li>עצירה, סיום ודוח</li>
+    <li>פתרון תקלות</li>
+    <li>שימוש אחראי, חשוב לקרוא</li>
+  </ol>
+</section>
+
+<section class="page-break">
+  <h2>חלק א': התקנה חד-פעמית</h2>
+  <p>את שלבים 1 עד 3 עושים פעם אחת בלבד בכל מחשב.</p>
+
+  <div class="step"><div class="num">1</div><h3>חילוץ קובץ ה-ZIP</h3></div>
+  <div class="step-body">
+    <ol>
+      <li>לחצו לחיצה ימנית על הקובץ <span class="code">PFA_Scout_Messenger.zip</span>.</li>
+      <li>בחרו <span class="ui">חלץ הכל...</span> (באנגלית: <span class="ltr">Extract All...</span>).</li>
+      <li>מומלץ לבחור תיקייה קבועה, למשל <span class="ui">מסמכים</span> (<span class="ltr">Documents</span>), וללחוץ <span class="ui">חלץ</span>.</li>
+    </ol>
+    <div class="box danger">
+      <div class="box-title">אל תפעילו את התוכנה מתוך קובץ ה-ZIP</div>
+      <p>אם תפתחו את ה-ZIP בלחיצה כפולה ותפעילו משם את <span class="code">START_PFA</span>, התוכנה לא תעבוד. קודם מחלצים, ואז מפעילים מהתיקייה שנוצרה.</p>
+    </div>
+  </div>
+
+  <div class="step"><div class="num">2</div><h3>התקנת Python</h3></div>
+  <div class="step-body">
+    <ol>
+      <li>היכנסו לכתובת <span class="code">https://www.python.org/downloads/windows/</span>.</li>
+      <li>חפשו ברשימה את <b>Python 3.13</b> (הגרסה שבה התוכנה נבדקה) ולחצו על <span class="ltr ui">Download Windows installer (64-bit)</span>.</li>
+      <li>הפעילו את הקובץ שהורד.</li>
+      <li>במסך הראשון של ההתקנה, <b>סמנו את התיבה <span class="ltr ui">Add python.exe to PATH</span></b> שבתחתית המסך.</li>
+      <li>לחצו <span class="ltr ui">Install Now</span>, ובסיום <span class="ltr ui">Close</span>.</li>
+    </ol>
+    <div class="box warn">
+      <div class="box-title">התיבה Add python.exe to PATH חשובה</div>
+      <p>אם שכחתם לסמן אותה והתוכנה לא מוצאת את Python, הריצו שוב את קובץ ההתקנה, בחרו <span class="ltr ui">Modify</span> או הסירו והתקינו מחדש, והפעם סמנו את התיבה.</p>
+    </div>
+  </div>
+
+  <div class="step"><div class="num">3</div><h3>התקנת Google Chrome</h3></div>
+  <div class="step-body">
+    <p>אם Chrome כבר מותקן במחשב, דלגו על השלב הזה. אחרת, הורידו והתקינו אותו מ-<span class="code">https://www.google.com/chrome/</span>.</p>
+    <p>התוכנה פותחת חלון Chrome נפרד משלה. הוא לא משפיע על ה-Chrome הרגיל שלכם.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>חלק ב': הפעלה ושימוש</h2>
+
+  <div class="step"><div class="num">4</div><h3>הפעלת התוכנה</h3></div>
+  <div class="step-body">
+    <ol>
+      <li>בתיקייה שחילצתם, לחצו לחיצה כפולה על <span class="code">START_PFA</span>.</li>
+      <li>אם מופיעה הודעה כחולה <span class="ui">Windows הגן על המחשב</span> (<span class="ltr">Windows protected your PC</span>), לחצו <span class="ui">מידע נוסף</span> (<span class="ltr">More info</span>) ואז <span class="ui">הפעל בכל זאת</span> (<span class="ltr">Run anyway</span>). זה קורה כי הקובץ הגיע מהאינטרנט.</li>
+      <li>ייפתח חלון שחור. <b>בפעם הראשונה</b> הוא מוריד ומתקין רכיבים, וזה יכול לקחת כמה דקות. בפעמים הבאות זה לוקח שניות.</li>
+      <li>אחרי כמה שניות תיפתח התוכנה בדפדפן, בכתובת <span class="code">http://localhost:8501</span>.</li>
+    </ol>
+    <div class="box tip">
+      <div class="box-title">החלון השחור הוא התוכנה עצמה</div>
+      <p>השאירו אותו פתוח כל זמן העבודה. סגירה שלו סוגרת את התוכנה. אם הדפדפן לא נפתח לבד, פתחו אותו והקלידו את הכתובת <span class="code">http://localhost:8501</span>.</p>
+    </div>
+    <figure>
+      <img src="img/01_start.png" alt="המסך הראשי">
+      <figcaption>המסך הראשי של התוכנה</figcaption>
+    </figure>
+  </div>
+
+  <div class="step"><div class="num">5</div><h3>הכנת רשימת הסקאוטים</h3></div>
+  <div class="step-body">
+    <ol>
+      <li>פתחו את <span class="code">scouts_template.xlsx</span> ושמרו עותק בשם חדש (<span class="ui">קובץ</span>, ואז <span class="ui">שמירה בשם</span>), למשל <span class="code">scouts_november.xlsx</span>.</li>
+      <li>בעמודה <span class="code">Name</span> כתבו את שם הסקאוט, בדיוק כפי שהוא יופיע בהודעה (למשל שם פרטי).</li>
+      <li>בעמודה <span class="code">Phone</span> כתבו את מספר הטלפון. סקאוט אחד בכל שורה.</li>
+    </ol>
+    <table>
+      <thead><tr><th style="width:42%">פורמט המספר</th><th>דוגמה</th><th style="width:14%">תקין?</th></tr></thead>
+      <tbody>
+        <tr><td>ישראלי, פורמט בינלאומי</td><td><span class="ltr">972501234567</span></td><td>כן</td></tr>
+        <tr><td>ישראלי, פורמט מקומי</td><td><span class="ltr">0501234567</span> או <span class="ltr">050-1234567</span></td><td>כן, מומר אוטומטית</td></tr>
+        <tr><td>עם פלוס ורווחים</td><td><span class="ltr">+972 50-123-4567</span></td><td>כן</td></tr>
+        <tr><td>מספר מחו"ל, עם קידומת המדינה</td><td><span class="ltr">447911123456</span> (בריטניה)</td><td>כן</td></tr>
+        <tr><td>מספר מחו"ל בפורמט מקומי</td><td><span class="ltr">07911123456</span></td><td><b>לא</b></td></tr>
+      </tbody>
+    </table>
+    <div class="box warn">
+      <div class="box-title">כללים חשובים לקובץ</div>
+      <ul>
+        <li>אין לשנות את הכותרות <span class="code">Name</span> ו-<span class="code">Phone</span> בשורה הראשונה.</li>
+        <li>מספר שמתחיל ב-0 נחשב מספר ישראלי. מספרים מחו"ל כותבים תמיד עם קידומת המדינה.</li>
+        <li>שורות בלי שם, עם מספר לא תקין, או עם מספר שכבר הופיע, ידולגו. התוכנה מציגה רשימה שלהן לפני ההתחלה.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step"><div class="num">6</div><h3>שליחת ההודעות</h3></div>
+  <div class="step-body">
+    <p><b>א. העלאת הקובץ.</b> לחצו <span class="ltr ui">Browse files</span> ובחרו את קובץ האקסל, או גררו אותו לתיבה. בדקו שהטבלה שמופיעה נכונה, ושאין אזהרות על שורות שידולגו.</p>
+    <figure>
+      <img src="img/02_uploaded.png" alt="אחרי העלאת הקובץ">
+      <figcaption>אחרי העלאת הקובץ: מספר הסקאוטים התקינים וטבלה לבדיקה</figcaption>
+    </figure>
+
+    <p><b>ב. כתיבת ההודעה.</b> כתבו את ההודעה בתיבה <span class="ui">תבנית ההודעה</span>. במקום שבו צריך להופיע שם הסקאוט, כתבו <span class="code">{name}</span> בדיוק כך, באנגלית ובסוגריים מסולסלים.</p>
+    <ul>
+      <li>התוכנה מוסיפה בתחילת כל הודעה ברכה אקראית (אהלן, שלום, היי, הי או שלום רב). <b>אל תפתחו את ההודעה בברכה</b>, אחרת היא תופיע פעמיים.</li>
+      <li>לחצו <span class="ui">תצוגה מקדימה</span> כדי לראות איך תיראה ההודעה לסקאוט הראשון.</li>
+      <li>מומלץ לפתוח בשם הסוכנות ולסיים בשאלה, למשל: "מתי נוח לך שאשלח פרטים?".</li>
+    </ul>
+
+    <p><b>ג. הגדרות.</b></p>
+    <ul>
+      <li><span class="ui">השהיה ראשונית לסריקת קוד QR</span>: כמה זמן יש לכם לסרוק את הקוד בפעם הראשונה. ברירת המחדל, 60 שניות, מספיקה. אם החיבור מזוהה מוקדם יותר, השליחה מתחילה מיד.</li>
+      <li><span class="ui">הגדרות מתקדמות</span>: זמן ההמתנה לטעינת צ'אט. בדרך כלל אין צורך לשנות. אם האינטרנט איטי וכל ההודעות נכשלות, אפשר להגדיל ל-60 או 90.</li>
+    </ul>
+    <figure>
+      <img src="img/03_template_settings.png" alt="תבנית ההודעה והגדרות">
+      <figcaption>תבנית ההודעה וההגדרות</figcaption>
+    </figure>
+
+    <p><b>ד. התחלת השליחה.</b> לחצו על הכפתור האדום <span class="ui">התחל אוטומציה</span>. ייפתח חלון Chrome עם WhatsApp Web.</p>
+    <div class="box tip">
+      <div class="box-title">בפעם הראשונה: סריקת קוד QR</div>
+      <p>בחלון ה-Chrome יופיע קוד QR. סרקו אותו בטלפון:</p>
+      <ul>
+        <li><b>אנדרואיד:</b> ב-WhatsApp לחצו על שלוש הנקודות למעלה, ואז <span class="ui">מכשירים מקושרים</span>, ואז <span class="ui">קישור מכשיר</span>.</li>
+        <li><b>אייפון:</b> ב-WhatsApp לחצו <span class="ui">הגדרות</span>, ואז <span class="ui">מכשירים מקושרים</span>, ואז <span class="ui">קישור מכשיר</span>.</li>
+      </ul>
+      <p>החיבור נשמר במחשב, כך שבפעמים הבאות לא צריך לסרוק שוב.</p>
+    </div>
+
+    <p><b>ה. במהלך השליחה.</b> מכאן הכל אוטומטי. ביומן הריצה רואים כל הודעה שנשלחה, כל כישלון, וספירה לאחור של ההפסקה עד ההודעה הבאה.</p>
+    <figure>
+      <img src="img/04_running.png" alt="במהלך הריצה">
+      <figcaption>במהלך הריצה: ההודעה הראשונה נשלחה, וספירה לאחור עד ההודעה הבאה</figcaption>
+    </figure>
+    <div class="box danger">
+      <div class="box-title">במהלך השליחה</div>
+      <ul>
+        <li>אל תיגעו בחלון ה-Chrome שנפתח ואל תסגרו אותו.</li>
+        <li>אל תשנו שום שדה בדף התוכנה, כי כל שינוי עוצר את השליחה.</li>
+        <li>אל תתנו למחשב להיכנס למצב שינה. כל הודעה לוקחת כדקה, כך ש-30 סקאוטים לוקחים כחצי שעה.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step"><div class="num">7</div><h3>עצירה, סיום ודוח</h3></div>
+  <div class="step-body">
+    <p>בסיום מופיע סיכום: כמה הודעות נשלחו, כמה נכשלו, וטבלה עם הסטטוס של כל סקאוט. בכפתור <span class="ui">הורד דוח (CSV)</span> שומרים את הטבלה כקובץ שנפתח באקסל.</p>
+    <figure>
+      <img src="img/05_summary.png" alt="סיכום הריצה">
+      <figcaption>סיום: יומן הריצה, סיכום, וטבלת סטטוס לכל סקאוט</figcaption>
+    </figure>
+    <ul>
+      <li><b>לעצירה באמצע</b> לוחצים <span class="ui">עצור שליחה</span>. הסיכום יציג את מה שנשלח עד העצירה.</li>
+      <li><b>לסגירת התוכנה</b> סוגרים את החלון השחור.</li>
+    </ul>
+    <div class="box warn">
+      <div class="box-title">שליחה חוזרת לאותה רשימה</div>
+      <p>התוכנה לא זוכרת למי כבר שלחה. אם תעלו שוב את אותו קובץ, <b>כל הסקאוטים יקבלו את ההודעה שוב</b>. לפני הרצה חוזרת, מחקו מהקובץ את מי שמופיע בדוח בסטטוס "נשלח".</p>
+    </div>
+    <div class="box tip">
+      <div class="box-title">מה פירוש "נשלח"</div>
+      <p>"נשלח" אומר שההודעה יצאה מהמחשב. זה לא מבטיח שהיא נמסרה או נקראה. את זה רואים בטלפון, לפי הווי הכחולים.</p>
+    </div>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>8. פתרון תקלות</h2>
+  <table>
+    <thead><tr><th style="width:38%">מה רואים</th><th>מה עושים</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>בחלון השחור: <span class="ltr">Python 3.10 or newer was not found</span></td>
+        <td>Python לא מותקן, או שלא סומנה התיבה <span class="ltr">Add python.exe to PATH</span>. חזרו לשלב 2, ואחרי ההתקנה הפעילו מחדש את המחשב.</td>
+      </tr>
+      <tr>
+        <td>בחלון השחור: <span class="ltr">The program is running from inside the ZIP file</span></td>
+        <td>חלצו קודם את קובץ ה-ZIP (שלב 1), והפעילו מהתיקייה שנוצרה.</td>
+      </tr>
+      <tr>
+        <td>בחלון השחור: <span class="ltr">Installing the required libraries failed</span></td>
+        <td>בדקו את החיבור לאינטרנט והפעילו שוב. אם זה חוזר, ודאו שהותקנה Python 3.13 ולא גרסה חדשה יותר.</td>
+      </tr>
+      <tr>
+        <td>הודעה כחולה <span class="ltr">Windows protected your PC</span></td>
+        <td><span class="ltr">More info</span> ואז <span class="ltr">Run anyway</span> (בעברית: מידע נוסף, ואז הפעל בכל זאת).</td>
+      </tr>
+      <tr>
+        <td>הדפדפן לא נפתח לבד</td>
+        <td>פתחו דפדפן והקלידו <span class="code">http://localhost:8501</span>.</td>
+      </tr>
+      <tr>
+        <td>"שגיאה בהפעלת הדפדפן"</td>
+        <td>ודאו ש-Google Chrome מותקן ומעודכן (שלב 3). סגרו חלונות Chrome פתוחים של התוכנה מריצה קודמת.</td>
+      </tr>
+      <tr>
+        <td>שגיאה "חסרות העמודות"</td>
+        <td>הכותרות באקסל חייבות להיות <span class="code">Name</span> ו-<span class="code">Phone</span>. השתמשו בתבנית המצורפת.</td>
+      </tr>
+      <tr>
+        <td>הודעה נכשלה: "הצ'אט לא נטען"</td>
+        <td>למספר הזה כנראה אין WhatsApp, או שהמספר שגוי. אם <b>כל</b> ההודעות נכשלות כך: בדקו שהטלפון מחובר ב-WhatsApp Web, הגדילו את זמן ההמתנה בהגדרות המתקדמות, ופנו למי שמתחזק את התוכנה. ייתכן ש-WhatsApp שינו את האתר.</td>
+      </tr>
+      <tr>
+        <td>הודעה נכשלה: "הוקלדה אך WhatsApp לא שלח אותה"</td>
+        <td>ההודעה נכתבה אבל לא יצאה. אם זה קורה שוב ושוב, עצרו ופנו למי שמתחזק את התוכנה.</td>
+      </tr>
+      <tr>
+        <td>WhatsApp מציג אזהרה, הגבלה או חסימה</td>
+        <td>עצרו מיד את השליחה ואל תנסו שוב באותו יום. ראו את פרק 9.</td>
+      </tr>
+      <tr>
+        <td>שוב צריך לסרוק קוד QR</td>
+        <td>זה תקין אם החיבור נותק מהטלפון, או אם הטלפון לא היה מחובר לאינטרנט במשך זמן רב. פשוט סורקים שוב.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>9. שימוש אחראי, חשוב לקרוא</h2>
+  <div class="box danger">
+    <div class="box-title">סיכון לחסימת מספר ה-WhatsApp</div>
+    <p>תנאי השימוש של WhatsApp אוסרים שליחה אוטומטית. ההפסקות והברכות האקראיות מקטינות את הסיכון, אבל <b>לא מבטלות אותו</b>. בדרך כלל קודם מגיעה הגבלה זמנית, שבה אי אפשר לפתוח צ'אטים חדשים ליום עד כמה ימים, אבל גם חסימה קבועה אפשרית. WhatsApp גם מגבילים את מספר ההודעות שאפשר לשלוח לאנשים שלא עונים, והמספר המדויק לא פורסם.</p>
+  </div>
+  <h3>המלצות</h3>
+  <ul>
+    <li>שלחו ממספר ותיק ופעיל, לא ממספר חדש.</li>
+    <li>שלחו קבוצות קטנות, <b>עד 20 עד 30 הודעות ביום</b>. אין מספר רשמי בטוח, וזו הערכה זהירה.</li>
+    <li>שלחו רק לסקאוטים שמכירים את הסוכנות.</li>
+    <li>ודאו ששם הפרופיל ותמונת הפרופיל בחשבון השולח הם של הסוכנות, ושהתמונה גלויה לכולם. ב-WhatsApp: <span class="ui">הגדרות</span>, ואז <span class="ui">פרטיות</span>, ואז <span class="ui">תמונת פרופיל</span>, ואז <span class="ui">כולם</span>. כך הסקאוטים יזהו אתכם מיד.</li>
+    <li>בכל אזהרה מ-WhatsApp, עצרו מיד.</li>
+  </ul>
+  <div class="box warn">
+    <div class="box-title">חוק הספאם</div>
+    <p>בישראל אסור לשלוח "דבר פרסומת" בלי הסכמה מראש של הנמען, והפיצוי יכול להגיע עד 1,000 ש"ח להודעה. לפני שליחה בהיקף גדול, מומלץ לבדוק עם עורך דין אם ההודעות שלכם נחשבות פרסומת.</p>
+  </div>
+  <div class="box ok">
+    <div class="box-title">פרטיות וחיבור החשבון</div>
+    <ul>
+      <li>אחרי הסריקה הראשונה נוצרת בתיקיית התוכנה תיקייה בשם <span class="code">chrome_profile</span>. היא מחזיקה את החיבור לחשבון ה-WhatsApp שלכם.</li>
+      <li><b>אל תשתפו את התיקייה אחרי שהשתמשתם בה.</b> כדי לתת את התוכנה למישהו אחר, שלחו לו את קובץ ה-ZIP המקורי.</li>
+      <li>כדי לנתק את המחשב מהחשבון: בטלפון, ב-WhatsApp, נכנסים ל<span class="ui">מכשירים מקושרים</span>, בוחרים את המחשב ולוחצים <span class="ui">התנתקות</span>.</li>
+    </ul>
+  </div>
+  <p class="footer-note">PFA Scout Messenger · Premier Football Agency · מדריך התקנה והפעלה</p>
+</section>
+
+</body>
+</html>

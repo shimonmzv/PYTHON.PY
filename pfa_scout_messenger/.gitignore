@@ -3,8 +3,11 @@ chrome_profile/
 
 # קבצי סקאוטים ודוחות (מידע אישי)
 *.xlsx
+!scouts_template.xlsx
 pfa_results_*.csv
 
 __pycache__/
 .venv/
 venv/
+docs/guide_build.html
+docs/fonts/
