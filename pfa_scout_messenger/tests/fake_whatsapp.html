@@ -1,0 +1,36 @@
+<!doctype html><meta charset="utf-8"><body>
+<div id="main"></div>
+<script>
+// WhatsApp Web simulator. Scenario by last digit of phone:
+// 1 = button click works | 2 = click ignored, Enter works (user's bug)
+// 3 = new icon name + aria-label | 4 = nothing sends | 5 = clicks ignored for 1s after load
+// phone 972500000000 = invalid (chat never opens)
+window.sent = [];
+const p = new URLSearchParams(location.search);
+const phone = p.get("phone"), text = p.get("text"), mode = phone.slice(-1);
+const main = document.getElementById("main");
+if (phone !== "972500000000") setTimeout(() => {
+  const footer = document.createElement("footer");
+  const box = document.createElement("div");
+  box.contentEditable = "true"; box.setAttribute("role", "textbox");
+  box.style.whiteSpace = "pre-wrap"; box.textContent = text;
+  const btn = document.createElement("button");
+  btn.setAttribute("aria-label", "Send");
+  const icon = document.createElement("span");
+  icon.dataset.icon = mode === "3" ? "wds-ic-send-filled" : "send"; icon.textContent = "➤";
+  btn.appendChild(icon); footer.append(box, btn); main.appendChild(footer);
+  const readyAt = Date.now() + (mode === "5" ? 1000 : 0);
+  const doSend = () => {
+    if (!box.textContent.trim()) return;
+    window.sent.push(box.textContent); box.textContent = "";
+    icon.dataset.icon = "ptt";   // send icon becomes microphone
+  };
+  btn.addEventListener("click", () => {
+    if (mode === "2" || mode === "4" || Date.now() < readyAt) return;
+    doSend();
+  });
+  box.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey && mode !== "4") { e.preventDefault(); doSend(); }
+  });
+}, 1200);
+</script>

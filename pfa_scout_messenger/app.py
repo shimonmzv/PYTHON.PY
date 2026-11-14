@@ -8,6 +8,7 @@ PFA Scout Messenger
     streamlit run app.py
 """
 
+import os
 import random
 import re
 import time
@@ -54,8 +55,14 @@ COMPOSER_XPATH = (
 LOGGED_IN_CSS = "#pane-side"
 
 # פרופיל כרום קבוע — שומר את החיבור ל-WhatsApp, כך שסריקת QR נדרשת רק בפעם הראשונה.
-# התיקייה מכילה את סשן ההתחברות: אסור להעלות אותה ל-git או לשתף אותה.
-CHROME_PROFILE_DIR = Path(__file__).resolve().parent / "chrome_profile"
+# ב-Windows הוא נשמר בתיקייה המקומית של המשתמש (LOCALAPPDATA) ולא ליד התוכנה,
+# כדי שלא יסונכרן ל-OneDrive ולא ישותף בטעות יחד עם תיקיית התוכנה.
+_LOCAL_DATA = os.environ.get("LOCALAPPDATA")
+CHROME_PROFILE_DIR = (
+    Path(_LOCAL_DATA) / "PFA_Scout_Messenger" / "chrome_profile"
+    if _LOCAL_DATA
+    else Path(__file__).resolve().parent / "chrome_profile"
+)
 
 # רשימת ברכות פתיחה לגיוון הטקסט (Text Spinning)
 GREETINGS = ["אהלן", "שלום", "היי", "הי", "שלום רב"]
@@ -191,7 +198,7 @@ def create_driver() -> webdriver.Chrome:
     מפעיל דפדפן Chrome גלוי (לא headless).
     Selenium Manager (מגרסה 4.6 ומעלה) מוריד אוטומטית את ה-ChromeDriver המתאים.
     """
-    CHROME_PROFILE_DIR.mkdir(exist_ok=True)
+    CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
     options = webdriver.ChromeOptions()
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_DIR}")

@@ -1,0 +1,88 @@
+name: PFA Scout Messenger - Windows test
+
+# Builds the exact ZIP users get, extracts it on a clean Windows machine and
+# runs the real launcher (first run, second run, self-repair), the test suite
+# with real Chrome, and a real start of the app.
+
+on:
+  push:
+    paths:
+      - "pfa_scout_messenger/**"
+      - ".github/workflows/pfa-windows-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      APP: ${{ github.workspace }}\pfa_scout_messenger
+      RELEASE_DIR: C:\Users\runneradmin\Documents\PFA Scout Messenger
+      RUNTIME_PY: C:\Users\runneradmin\AppData\Local\PFA_Scout_Messenger\runtime\venv\Scripts\python.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the release ZIP
+        run: python pfa_scout_messenger/build_release.py
+
+      - name: Extract it like a user would (folder with spaces)
+        run: Expand-Archive -Path "$env:APP\dist\PFA_Scout_Messenger.zip" -DestinationPath "$env:RELEASE_DIR"
+
+      - name: "Launcher: first run (downloads Python + libraries, self-test)"
+        shell: cmd
+        run: |
+          cd /d "%RELEASE_DIR%"
+          call START_PFA.bat --check
+
+      - name: "Launcher: second run (already installed)"
+        shell: cmd
+        run: |
+          cd /d "%RELEASE_DIR%"
+          call START_PFA.bat --check
+
+      - name: "Launcher: repairs a broken pandas install (the reported error)"
+        shell: pwsh
+        run: |
+          $site = Split-Path (Split-Path $env:RUNTIME_PY) | Join-Path -ChildPath "Lib\site-packages"
+          Remove-Item "$site\pandas\_libs\tslibs\dtypes*.pyd" -Verbose
+          & $env:RUNTIME_PY -c "import pandas" ; if ($LASTEXITCODE -eq 0) { throw "pandas should be broken now" }
+          Push-Location $env:RELEASE_DIR
+          cmd /c START_PFA.bat --check
+          $code = $LASTEXITCODE
+          Pop-Location
+          if ($code -ne 0) { throw "launcher did not repair the install" }
+          & $env:RUNTIME_PY -c "import pandas; print('pandas', pandas.__version__)"
+          if ($LASTEXITCODE -ne 0) { throw "pandas still broken" }
+
+      - name: Test suite (logic + real Chrome send flow)
+        shell: cmd
+        run: |
+          "%RUNTIME_PY%" "%APP%\tests\run_tests.py" "%RELEASE_DIR%"
+
+      - name: Real start of the app through the launcher
+        shell: pwsh
+        run: |
+          $p = Start-Process cmd.exe -ArgumentList '/c', 'START_PFA.bat' -WorkingDirectory $env:RELEASE_DIR -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 90 -and -not $ok; $i++) {
+            try {
+              $r = Invoke-WebRequest http://localhost:8501/_stcore/health -UseBasicParsing -TimeoutSec 2
+              $ok = ($r.Content -eq 'ok')
+            } catch { }
+            if (-not $ok) { Start-Sleep -Seconds 1 }
+          }
+          $status = 0
+          if ($ok) { $status = (Invoke-WebRequest http://localhost:8501 -UseBasicParsing).StatusCode }
+          taskkill /F /T /PID $p.Id | Out-Null
+          if (-not $ok) { throw "app did not answer on port 8501" }
+          if ($status -ne 200) { throw "main page status $status" }
+          Write-Host "App started and answered: health=ok, page=200"
+
+      - name: Upload the tested ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: PFA_Scout_Messenger
+          path: pfa_scout_messenger/dist/PFA_Scout_Messenger.zip

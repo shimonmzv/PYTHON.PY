@@ -3,6 +3,27 @@ setlocal
 cd /d "%~dp0"
 title PFA Scout Messenger
 
+rem ============================================================
+rem  PFA Scout Messenger - Windows launcher
+rem  Python and all libraries are installed automatically into
+rem  %LOCALAPPDATA%\PFA_Scout_Messenger (a local, non-synced folder).
+rem  Nothing has to be installed by hand (except Google Chrome).
+rem  "START_PFA.bat --check" = set up and self-test only (used by CI).
+rem ============================================================
+
+set "APP_DIR=%~dp0"
+set "UV=%APP_DIR%bin\uv.exe"
+set "RUNTIME=%LOCALAPPDATA%\PFA_Scout_Messenger\runtime"
+set "VENV=%RUNTIME%\venv"
+set "PY=%VENV%\Scripts\python.exe"
+set "UV_PYTHON_INSTALL_DIR=%RUNTIME%\python"
+set "UV_CACHE_DIR=%RUNTIME%\cache"
+set "UV_PYTHON_PREFERENCE=only-managed"
+set "SYNC_FLAGS="
+set "REPAIRED="
+set "CHECK_ONLY="
+if /i "%~1"=="--check" set "CHECK_ONLY=1"
+
 echo ==================================================
 echo              PFA Scout Messenger
 echo ==================================================
@@ -11,18 +32,10 @@ echo.
 rem --- Refuse to run from inside the ZIP (Windows runs it from a temp folder) ---
 echo "%~dp0" | find /i "\AppData\Local\Temp\" >nul
 if not errorlevel 1 goto :fail_zip
+if not exist "%UV%" goto :fail_files
+if not exist "%APP_DIR%app.py" goto :fail_files
 
-rem --- 1. Find Python 3.10 or newer ---
-set "PY="
-py -3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
-if not errorlevel 1 set "PY=py -3"
-if defined PY goto :python_ok
-python -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
-if not errorlevel 1 set "PY=python"
-if not defined PY goto :fail_python
-:python_ok
-
-rem --- 2. Check that Google Chrome is installed (warning only) ---
+rem --- Google Chrome (warning only) ---
 set "CHROME_FOUND="
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "CHROME_FOUND=1"
 if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "CHROME_FOUND=1"
@@ -30,53 +43,74 @@ if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe" set "CHROME_FOUND
 if not defined CHROME_FOUND echo [WARNING] Google Chrome was not found. Install it from https://www.google.com/chrome/
 if not defined CHROME_FOUND echo.
 
-rem --- 3. Private Python environment for this app (created on the first run) ---
-if exist ".venv\Scripts\python.exe" goto :venv_ok
-echo First run: preparing the environment. This can take a few minutes...
-%PY% -m venv .venv
-if errorlevel 1 goto :fail_venv
-:venv_ok
-
-echo Checking required libraries (the first run downloads them, please wait)...
-".venv\Scripts\python.exe" -m pip install --disable-pip-version-check -q -r requirements.txt
-if errorlevel 1 goto :fail_install
-
-rem --- 4. Start the app and open it in the browser ---
+:setup
+if exist "%PY%" goto :sync
+echo Preparing the program. The first time this downloads about 150 MB
+echo and takes a few minutes. Please wait and do not close this window...
 echo.
-echo Starting the app. The browser will open in a few seconds.
+if not exist "%RUNTIME%" mkdir "%RUNTIME%"
+"%UV%" venv "%VENV%" --python 3.13 --clear
+if errorlevel 1 goto :repair
+
+:sync
+rem Install exactly the tested library versions (fast when already installed)
+"%UV%" pip sync "%APP_DIR%requirements.lock" --python "%PY%" --no-build %SYNC_FLAGS%
+if errorlevel 1 goto :repair
+
+rem Self-test: every library must load. A broken install is rebuilt once automatically.
+"%PY%" -c "import pandas, streamlit, selenium, openpyxl"
+if errorlevel 1 goto :repair
+goto :ready
+
+:repair
+if defined REPAIRED goto :fail_setup
+set "REPAIRED=1"
+set "SYNC_FLAGS=--reinstall --refresh"
+echo.
+echo Something is wrong with the program files. Rebuilding them, please wait...
+echo.
+if exist "%VENV%" rmdir /s /q "%VENV%"
+goto :setup
+
+:ready
+if defined CHECK_ONLY goto :check_done
+
+echo.
+echo Starting the app. The browser will open by itself in a few seconds.
 echo If it does not open, browse to: http://localhost:8501
 echo.
 echo KEEP THIS WINDOW OPEN while using the app. Close it to quit.
 echo.
-start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 6; Start-Process 'http://localhost:8501'"
-".venv\Scripts\python.exe" -m streamlit run app.py --server.headless true --browser.gatherUsageStats false
+start "" powershell -NoProfile -WindowStyle Hidden -Command "$u='http://localhost:8501'; for ($i=0; $i -lt 90; $i++) { try { Invoke-WebRequest ($u + '/_stcore/health') -UseBasicParsing -TimeoutSec 2 | Out-Null; break } catch { Start-Sleep -Seconds 1 } }; Start-Process $u"
+"%PY%" -m streamlit run "%APP_DIR%app.py" --server.headless true --server.port 8501 --browser.gatherUsageStats false
 echo.
 echo The app has stopped.
 pause
 exit /b 0
 
+:check_done
+"%PY%" -c "import sys, app; print('Self-test passed: Python', sys.version.split()[0])"
+if errorlevel 1 goto :fail_setup
+exit /b 0
+
 :fail_zip
 echo [ERROR] The program is running from inside the ZIP file.
 echo Right-click the ZIP file, choose "Extract All", and run START_PFA from the extracted folder.
-pause
-exit /b 1
+goto :fail_end
 
-:fail_python
-echo [ERROR] Python 3.10 or newer was not found.
-echo Install it from https://www.python.org/downloads/
-echo During installation, check the box "Add python.exe to PATH".
-echo Then run START_PFA again. See step 1 in PFA_Guide.pdf.
-pause
-exit /b 1
+:fail_files
+echo [ERROR] Program files are missing (bin\uv.exe or app.py).
+echo Extract the whole ZIP file again with "Extract All", and run START_PFA from the extracted folder.
+goto :fail_end
 
-:fail_venv
-echo [ERROR] Could not create the Python environment in this folder.
-echo Try moving the folder to "Documents" and run START_PFA again.
-pause
-exit /b 1
+:fail_setup
+echo.
+echo [ERROR] Setting up the program failed.
+echo 1. Check the internet connection (the first run downloads files).
+echo 2. Run START_PFA again.
+echo 3. If it still fails, send a screenshot of this window to the person who maintains the program.
+goto :fail_end
 
-:fail_install
-echo [ERROR] Installing the required libraries failed.
-echo Check the internet connection and run START_PFA again.
-pause
+:fail_end
+if not defined CHECK_ONLY pause
 exit /b 1
