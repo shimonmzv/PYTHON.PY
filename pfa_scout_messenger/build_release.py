@@ -6,6 +6,8 @@
 
 הרצה:
     python build_release.py
+
+הפלט באנגלית בלבד: קונסולת Windows (cp1252) לא יודעת להציג עברית.
 """
 
 import subprocess
@@ -51,14 +53,14 @@ def fetch_uv_windows(work: Path) -> dict[str, bytes]:
             elif "/licenses/" in name and base.startswith("LICENSE"):
                 found[f"bin/uv-{base}"] = zf.read(name)
     if "bin/uv.exe" not in found:
-        raise SystemExit("uv.exe לא נמצא ב-wheel")
+        raise SystemExit("uv.exe not found in the wheel")
     return found
 
 
 def main() -> None:
     missing = [f for f in FILES if not (HERE / f).exists()]
     if missing:
-        raise SystemExit(f"חסרים קבצים: {missing}")
+        raise SystemExit(f"missing files: {missing}")
 
     DIST.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
@@ -71,7 +73,7 @@ def main() -> None:
             zf.writestr(arcname, data)
 
     size_mb = ZIP_PATH.stat().st_size / 1_000_000
-    print(f"נוצר: {ZIP_PATH} ({size_mb:.1f} MB)")
+    print(f"built: {ZIP_PATH} ({size_mb:.1f} MB)")
     with zipfile.ZipFile(ZIP_PATH) as zf:
         for info in zf.infolist():
             print(f"  {info.filename:28} {info.file_size:>10,}")
