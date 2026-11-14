@@ -132,7 +132,7 @@
       <tr><td><span class="code">PFA_Guide.pdf</span></td><td>המדריך הזה.</td></tr>
       <tr><td><span class="code">START_PFA.bat</span></td><td><b>קובץ ההפעלה.</b> לחיצה כפולה עליו מפעילה את התוכנה. ייתכן שיופיע בשם <span class="code">START_PFA</span> בלבד, בלי הסיומת.</td></tr>
       <tr><td><span class="code">scouts_template.xlsx</span></td><td>תבנית אקסל ריקה לרשימת הסקאוטים.</td></tr>
-      <tr><td><span class="code">app.py</span>, <span class="code">requirements.txt</span></td><td>קבצי התוכנה. <b>אין לשנות, לשנות שם או למחוק אותם.</b></td></tr>
+      <tr><td><span class="code">app.py</span>, <span class="code">requirements.lock</span>, התיקייה <span class="code">bin</span></td><td>קבצי התוכנה ורכיב ההתקנה האוטומטית. <b>אין לשנות, לשנות שם או למחוק אותם.</b></td></tr>
     </tbody>
   </table>
 
@@ -140,27 +140,17 @@
   <ul>
     <li>מחשב עם Windows 10 או Windows 11, וחיבור לאינטרנט.</li>
     <li>הטלפון עם חשבון ה-WhatsApp שממנו יישלחו ההודעות.</li>
-    <li>דפדפן Google Chrome (שלב 3).</li>
-    <li>Python, תוכנה חינמית שמריצה את התוכנה (שלב 2). מתקינים אותה פעם אחת בלבד.</li>
+    <li>דפדפן Google Chrome (שלב 2).</li>
   </ul>
-
-  <h3>תוכן המדריך</h3>
-  <ol class="toc">
-    <li>חילוץ קובץ ה-ZIP</li>
-    <li>התקנת Python</li>
-    <li>התקנת Google Chrome</li>
-    <li>הפעלת התוכנה</li>
-    <li>הכנת רשימת הסקאוטים</li>
-    <li>שליחת ההודעות</li>
-    <li>עצירה, סיום ודוח</li>
-    <li>פתרון תקלות</li>
-    <li>שימוש אחראי, חשוב לקרוא</li>
-  </ol>
+  <div class="box ok">
+    <div class="box-title">אין צורך להתקין שום דבר נוסף</div>
+    <p>כל מה שהתוכנה צריכה, כולל Python, מותקן אוטומטית בהפעלה הראשונה.</p>
+  </div>
 </section>
 
 <section class="page-break">
-  <h2>חלק א': התקנה חד-פעמית</h2>
-  <p>את שלבים 1 עד 3 עושים פעם אחת בלבד בכל מחשב.</p>
+  <h2>חלק א': הכנה חד-פעמית</h2>
+  <p>את שני השלבים האלה עושים פעם אחת בלבד בכל מחשב.</p>
 
   <div class="step"><div class="num">1</div><h3>חילוץ קובץ ה-ZIP</h3></div>
   <div class="step-body">
@@ -175,42 +165,28 @@
     </div>
   </div>
 
-  <div class="step"><div class="num">2</div><h3>התקנת Python</h3></div>
-  <div class="step-body">
-    <ol>
-      <li>היכנסו לכתובת <span class="code">https://www.python.org/downloads/windows/</span>.</li>
-      <li>חפשו ברשימה את <b>Python 3.13</b> (הגרסה שבה התוכנה נבדקה) ולחצו על <span class="ltr ui">Download Windows installer (64-bit)</span>.</li>
-      <li>הפעילו את הקובץ שהורד.</li>
-      <li>במסך הראשון של ההתקנה, <b>סמנו את התיבה <span class="ltr ui">Add python.exe to PATH</span></b> שבתחתית המסך.</li>
-      <li>לחצו <span class="ltr ui">Install Now</span>, ובסיום <span class="ltr ui">Close</span>.</li>
-    </ol>
-    <div class="box warn">
-      <div class="box-title">התיבה Add python.exe to PATH חשובה</div>
-      <p>אם שכחתם לסמן אותה והתוכנה לא מוצאת את Python, הריצו שוב את קובץ ההתקנה, בחרו <span class="ltr ui">Modify</span> או הסירו והתקינו מחדש, והפעם סמנו את התיבה.</p>
-    </div>
-  </div>
-
-  <div class="step"><div class="num">3</div><h3>התקנת Google Chrome</h3></div>
+  <div class="step"><div class="num">2</div><h3>בדיקה ש-Google Chrome מותקן</h3></div>
   <div class="step-body">
     <p>אם Chrome כבר מותקן במחשב, דלגו על השלב הזה. אחרת, הורידו והתקינו אותו מ-<span class="code">https://www.google.com/chrome/</span>.</p>
     <p>התוכנה פותחת חלון Chrome נפרד משלה. הוא לא משפיע על ה-Chrome הרגיל שלכם.</p>
   </div>
 </section>
 
-<section class="page-break">
+<section>
   <h2>חלק ב': הפעלה ושימוש</h2>
 
-  <div class="step"><div class="num">4</div><h3>הפעלת התוכנה</h3></div>
+  <div class="step"><div class="num">3</div><h3>הפעלת התוכנה</h3></div>
   <div class="step-body">
     <ol>
       <li>בתיקייה שחילצתם, לחצו לחיצה כפולה על <span class="code">START_PFA</span>.</li>
       <li>אם מופיעה הודעה כחולה <span class="ui">Windows הגן על המחשב</span> (<span class="ltr">Windows protected your PC</span>), לחצו <span class="ui">מידע נוסף</span> (<span class="ltr">More info</span>) ואז <span class="ui">הפעל בכל זאת</span> (<span class="ltr">Run anyway</span>). זה קורה כי הקובץ הגיע מהאינטרנט.</li>
-      <li>ייפתח חלון שחור. <b>בפעם הראשונה</b> הוא מוריד ומתקין רכיבים, וזה יכול לקחת כמה דקות. בפעמים הבאות זה לוקח שניות.</li>
+      <li>ייפתח חלון שחור. <b>בפעם הראשונה</b> התוכנה מורידה ומתקינה לבד את כל מה שהיא צריכה (כ-150MB), וזה לוקח כמה דקות. לא צריך לעשות כלום, רק לחכות. בפעמים הבאות זה לוקח שניות.</li>
       <li>אחרי כמה שניות תיפתח התוכנה בדפדפן, בכתובת <span class="code">http://localhost:8501</span>.</li>
     </ol>
     <div class="box tip">
       <div class="box-title">החלון השחור הוא התוכנה עצמה</div>
       <p>השאירו אותו פתוח כל זמן העבודה. סגירה שלו סוגרת את התוכנה. אם הדפדפן לא נפתח לבד, פתחו אותו והקלידו את הכתובת <span class="code">http://localhost:8501</span>.</p>
+      <p>בכל הפעלה התוכנה בודקת את עצמה. אם משהו בקבצים שלה התקלקל, היא מתקנת אותו לבד ומודיעה על כך בחלון השחור.</p>
     </div>
     <figure>
       <img src="img/01_start.png" alt="המסך הראשי">
@@ -218,7 +194,7 @@
     </figure>
   </div>
 
-  <div class="step"><div class="num">5</div><h3>הכנת רשימת הסקאוטים</h3></div>
+  <div class="step"><div class="num">4</div><h3>הכנת רשימת הסקאוטים</h3></div>
   <div class="step-body">
     <ol>
       <li>פתחו את <span class="code">scouts_template.xlsx</span> ושמרו עותק בשם חדש (<span class="ui">קובץ</span>, ואז <span class="ui">שמירה בשם</span>), למשל <span class="code">scouts_november.xlsx</span>.</li>
@@ -245,7 +221,7 @@
     </div>
   </div>
 
-  <div class="step"><div class="num">6</div><h3>שליחת ההודעות</h3></div>
+  <div class="step"><div class="num">5</div><h3>שליחת ההודעות</h3></div>
   <div class="step-body">
     <p><b>א. העלאת הקובץ.</b> לחצו <span class="ltr ui">Browse files</span> ובחרו את קובץ האקסל, או גררו אותו לתיבה. בדקו שהטבלה שמופיעה נכונה, ושאין אזהרות על שורות שידולגו.</p>
     <figure>
@@ -296,7 +272,7 @@
     </div>
   </div>
 
-  <div class="step"><div class="num">7</div><h3>עצירה, סיום ודוח</h3></div>
+  <div class="step"><div class="num">6</div><h3>עצירה, סיום ודוח</h3></div>
   <div class="step-body">
     <p>בסיום מופיע סיכום: כמה הודעות נשלחו, כמה נכשלו, וטבלה עם הסטטוס של כל סקאוט. בכפתור <span class="ui">הורד דוח (CSV)</span> שומרים את הטבלה כקובץ שנפתח באקסל.</p>
     <figure>
@@ -319,21 +295,25 @@
 </section>
 
 <section class="page-break">
-  <h2>8. פתרון תקלות</h2>
+  <h2>7. פתרון תקלות</h2>
   <table>
     <thead><tr><th style="width:38%">מה רואים</th><th>מה עושים</th></tr></thead>
     <tbody>
-      <tr>
-        <td>בחלון השחור: <span class="ltr">Python 3.10 or newer was not found</span></td>
-        <td>Python לא מותקן, או שלא סומנה התיבה <span class="ltr">Add python.exe to PATH</span>. חזרו לשלב 2, ואחרי ההתקנה הפעילו מחדש את המחשב.</td>
-      </tr>
       <tr>
         <td>בחלון השחור: <span class="ltr">The program is running from inside the ZIP file</span></td>
         <td>חלצו קודם את קובץ ה-ZIP (שלב 1), והפעילו מהתיקייה שנוצרה.</td>
       </tr>
       <tr>
-        <td>בחלון השחור: <span class="ltr">Installing the required libraries failed</span></td>
-        <td>בדקו את החיבור לאינטרנט והפעילו שוב. אם זה חוזר, ודאו שהותקנה Python 3.13 ולא גרסה חדשה יותר.</td>
+        <td>בחלון השחור: <span class="ltr">Program files are missing</span></td>
+        <td>חלק מהקבצים לא חולצו. מחקו את התיקייה, חלצו שוב את כל ה-ZIP עם "חלץ הכל", והפעילו מחדש.</td>
+      </tr>
+      <tr>
+        <td>בחלון השחור: <span class="ltr">Setting up the program failed</span></td>
+        <td>בדקו את החיבור לאינטרנט, כי ההפעלה הראשונה מורידה קבצים, והפעילו שוב. אם זה חוזר, שלחו צילום מסך של החלון השחור למי שמתחזק את התוכנה.</td>
+      </tr>
+      <tr>
+        <td>בחלון השחור: <span class="ltr">Rebuilding them, please wait</span></td>
+        <td>זה תקין. התוכנה זיהתה קבצים פגומים ומתקנת אותם לבד. חכו כמה דקות.</td>
       </tr>
       <tr>
         <td>הודעה כחולה <span class="ltr">Windows protected your PC</span></td>
@@ -345,7 +325,7 @@
       </tr>
       <tr>
         <td>"שגיאה בהפעלת הדפדפן"</td>
-        <td>ודאו ש-Google Chrome מותקן ומעודכן (שלב 3). סגרו חלונות Chrome פתוחים של התוכנה מריצה קודמת.</td>
+        <td>ודאו ש-Google Chrome מותקן ומעודכן (שלב 2). סגרו חלונות Chrome פתוחים של התוכנה מריצה קודמת.</td>
       </tr>
       <tr>
         <td>שגיאה "חסרות העמודות"</td>
@@ -360,8 +340,12 @@
         <td>ההודעה נכתבה אבל לא יצאה. אם זה קורה שוב ושוב, עצרו ופנו למי שמתחזק את התוכנה.</td>
       </tr>
       <tr>
+        <td>יש במחשב גרסה קודמת של התוכנה</td>
+        <td>מחקו את התיקייה הישנה והשתמשו רק בתיקייה החדשה.</td>
+      </tr>
+      <tr>
         <td>WhatsApp מציג אזהרה, הגבלה או חסימה</td>
-        <td>עצרו מיד את השליחה ואל תנסו שוב באותו יום. ראו את פרק 9.</td>
+        <td>עצרו מיד את השליחה ואל תנסו שוב באותו יום. ראו את פרק 8.</td>
       </tr>
       <tr>
         <td>שוב צריך לסרוק קוד QR</td>
@@ -372,7 +356,7 @@
 </section>
 
 <section>
-  <h2>9. שימוש אחראי, חשוב לקרוא</h2>
+  <h2>8. שימוש אחראי, חשוב לקרוא</h2>
   <div class="box danger">
     <div class="box-title">סיכון לחסימת מספר ה-WhatsApp</div>
     <p>תנאי השימוש של WhatsApp אוסרים שליחה אוטומטית. ההפסקות והברכות האקראיות מקטינות את הסיכון, אבל <b>לא מבטלות אותו</b>. בדרך כלל קודם מגיעה הגבלה זמנית, שבה אי אפשר לפתוח צ'אטים חדשים ליום עד כמה ימים, אבל גם חסימה קבועה אפשרית. WhatsApp גם מגבילים את מספר ההודעות שאפשר לשלוח לאנשים שלא עונים, והמספר המדויק לא פורסם.</p>
@@ -392,9 +376,9 @@
   <div class="box ok">
     <div class="box-title">פרטיות וחיבור החשבון</div>
     <ul>
-      <li>אחרי הסריקה הראשונה נוצרת בתיקיית התוכנה תיקייה בשם <span class="code">chrome_profile</span>. היא מחזיקה את החיבור לחשבון ה-WhatsApp שלכם.</li>
-      <li><b>אל תשתפו את התיקייה אחרי שהשתמשתם בה.</b> כדי לתת את התוכנה למישהו אחר, שלחו לו את קובץ ה-ZIP המקורי.</li>
+      <li>החיבור לחשבון ה-WhatsApp נשמר במחשב, בתיקייה מקומית של Windows (<span class="code">AppData\Local\PFA_Scout_Messenger</span>), ולא בתיקיית התוכנה. לכן אפשר לשתף את תיקיית התוכנה בלי לשתף את החיבור לחשבון.</li>
       <li>כדי לנתק את המחשב מהחשבון: בטלפון, ב-WhatsApp, נכנסים ל<span class="ui">מכשירים מקושרים</span>, בוחרים את המחשב ולוחצים <span class="ui">התנתקות</span>.</li>
+      <li>להסרה מלאה של התוכנה: מוחקים את תיקיית התוכנה, ואת התיקייה <span class="code">%LOCALAPPDATA%\PFA_Scout_Messenger</span>. אפשר להדביק את הכתובת הזו בשורת הכתובת של סייר הקבצים.</li>
     </ul>
   </div>
   <p class="footer-note">PFA Scout Messenger · Premier Football Agency · מדריך התקנה והפעלה</p>
