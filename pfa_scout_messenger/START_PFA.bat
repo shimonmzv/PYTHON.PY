@@ -83,7 +83,10 @@ goto :ready
 
 :find_python
 set "PY="
-for /f "usebackq delims=" %%P in (`""%UV%" python find 3.13 2>nul"`) do set "PY=%%P"
+rem (via a file, not "for /f": a ")" in the folder name, e.g. "PFA (1)", breaks for /f)
+"%UV%" python find 3.13 >"%RUNTIME%\python_find.txt" 2>nul
+if errorlevel 1 exit /b 0
+set /p PY=<"%RUNTIME%\python_find.txt"
 exit /b 0
 
 :setup_failed
