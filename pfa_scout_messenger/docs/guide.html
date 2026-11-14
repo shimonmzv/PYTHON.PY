@@ -312,6 +312,10 @@
         <td>בדקו את החיבור לאינטרנט, כי ההפעלה הראשונה מורידה קבצים, והפעילו שוב. אם זה חוזר, שלחו צילום מסך של החלון השחור למי שמתחזק את התוכנה.</td>
       </tr>
       <tr>
+        <td>בחלון השחור: <span class="ltr">[BLOCKED] Windows blocked one of the program files</span></td>
+        <td>ההגנה Smart App Control של Windows 11 חסמה קובץ של התוכנה. ראו את התיבה "חסימה של Windows" מתחת לטבלה.</td>
+      </tr>
+      <tr>
         <td>בחלון השחור: <span class="ltr">Rebuilding them, please wait</span></td>
         <td>זה תקין. התוכנה זיהתה קבצים פגומים ומתקנת אותם לבד. חכו כמה דקות.</td>
       </tr>
@@ -353,6 +357,17 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="box warn">
+    <div class="box-title">חסימה של Windows (Blocked by Windows)</div>
+    <p>ב-Windows 11 יש הגנה בשם <b>Smart App Control</b>, שחוסמת קבצים שאין עליהם חתימה דיגיטלית. התוכנה בנויה כך שהיא משתמשת רק ברכיבים שההגנה מאשרת בדרך כלל, אבל אין לנו דרך להבטיח את זה מראש בכל מחשב.</p>
+    <p>אם בכל זאת מופיעה ההודעה <span class="ltr">[BLOCKED]</span>:</p>
+    <ol>
+      <li>ודאו שאתם משתמשים בגרסה האחרונה של התוכנה, ולא בתיקייה ישנה.</li>
+      <li>צלמו את החלון השחור ושלחו למי שמתחזק את התוכנה. השורות שמתחת ל-<span class="ltr">Details</span> מראות איזה קובץ נחסם.</li>
+      <li>אפשרות נוספת היא לכבות את ההגנה: <span class="ui">הגדרות</span>, ואז <span class="ui">פרטיות ואבטחה</span>, ואז <span class="ui">אבטחת Windows</span>, ואז <span class="ui">בקרת אפליקציות ודפדפן</span>, ואז <span class="ui">הגדרות Smart App Control</span>, ואז <span class="ui">כבוי</span>. <b>שימו לב:</b> זה מוריד הגנה מהמחשב, ובחלק מגרסאות Windows אי אפשר להדליק אותה שוב בלי להתקין את Windows מחדש. לא מומלץ לעשות את זה בלי לשקול.</li>
+    </ol>
+  </div>
 </section>
 
 <section>
