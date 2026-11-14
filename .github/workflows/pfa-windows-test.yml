@@ -20,22 +20,35 @@ jobs:
     timeout-minutes: 40
     env:
       APP: ${{ github.workspace }}\pfa_scout_messenger
-      RELEASE_DIR: C:\Users\runneradmin\Documents\PFA Scout Messenger
-      RUNTIME_PY: C:\Users\runneradmin\AppData\Local\PFA_Scout_Messenger\runtime\venv\Scripts\python.exe
+      RELEASE_DIR: C:\Users\runneradmin\Documents\PFA Scout Messenger (1)
+      RUNTIME: C:\Users\runneradmin\AppData\Local\PFA_Scout_Messenger\runtime
+      LIBS: C:\Users\runneradmin\AppData\Local\PFA_Scout_Messenger\runtime\libs
     steps:
       - uses: actions/checkout@v4
 
       - name: Build the release ZIP
         run: python pfa_scout_messenger/build_release.py
 
-      - name: Extract it like a user would (folder with spaces)
+      - name: Extract it like a user would (folder name with spaces and parentheses)
         run: Expand-Archive -Path "$env:APP\dist\PFA_Scout_Messenger.zip" -DestinationPath "$env:RELEASE_DIR"
+
+      - name: Leave a venv from the previous version (must be removed)
+        run: New-Item -ItemType Directory -Force "$env:RUNTIME\venv\Scripts" | Out-Null
 
       - name: "Launcher: first run (downloads Python + libraries, self-test)"
         shell: cmd
         run: |
           cd /d "%RELEASE_DIR%"
           call START_PFA.bat --check
+
+      - name: "No virtual environment (its launcher is blocked by Smart App Control)"
+        run: |
+          if (Test-Path "$env:RUNTIME\venv") { throw "old venv folder was not removed" }
+          $py = (Get-Content "$env:RUNTIME\python_path.txt").Trim()
+          Write-Host "Python used directly: $py"
+          if ($py -match '\\Scripts\\python\.exe$') { throw "a venv launcher is used" }
+          $sig = Get-AuthenticodeSignature $py
+          Write-Host "python.exe signature: $($sig.Status)"
 
       - name: "Launcher: second run (already installed)"
         shell: cmd
@@ -44,26 +57,36 @@ jobs:
           call START_PFA.bat --check
 
       - name: "Launcher: repairs a broken pandas install (the reported error)"
-        shell: pwsh
         run: |
-          $site = Split-Path (Split-Path $env:RUNTIME_PY) | Join-Path -ChildPath "Lib\site-packages"
-          Remove-Item "$site\pandas\_libs\tslibs\dtypes*.pyd" -Verbose
-          & $env:RUNTIME_PY -c "import pandas" ; if ($LASTEXITCODE -eq 0) { throw "pandas should be broken now" }
+          $py = (Get-Content "$env:RUNTIME\python_path.txt").Trim()
+          $env:PYTHONPATH = $env:LIBS
+          Remove-Item "$env:LIBS\pandas\_libs\tslibs\dtypes*.pyd" -Verbose
+          & $py -c "import pandas" ; if ($LASTEXITCODE -eq 0) { throw "pandas should be broken now" }
           Push-Location $env:RELEASE_DIR
           cmd /c START_PFA.bat --check
           $code = $LASTEXITCODE
           Pop-Location
           if ($code -ne 0) { throw "launcher did not repair the install" }
-          & $env:RUNTIME_PY -c "import pandas; print('pandas', pandas.__version__)"
+          & $py -c "import pandas; print('pandas', pandas.__version__)"
           if ($LASTEXITCODE -ne 0) { throw "pandas still broken" }
 
       - name: Test suite (logic + real Chrome send flow)
         shell: cmd
         run: |
-          "%RUNTIME_PY%" "%APP%\tests\run_tests.py" "%RELEASE_DIR%"
+          set /p PY=<"%RUNTIME%\python_path.txt"
+          set "PYTHONPATH=%LIBS%"
+          set "PYTHONNOUSERSITE=1"
+          "%PY%" "%APP%\tests\run_tests.py" "%RELEASE_DIR%"
+
+      - name: ChromeDriver is Google's signed binary
+        run: |
+          $drv = Get-ChildItem "$env:LOCALAPPDATA\PFA_Scout_Messenger\chromedriver" -Recurse -Filter chromedriver.exe | Select-Object -First 1
+          if (-not $drv) { throw "chromedriver was not downloaded" }
+          $sig = Get-AuthenticodeSignature $drv.FullName
+          Write-Host "$($drv.FullName): $($sig.Status) / $($sig.SignerCertificate.Subject)"
+          if ($sig.Status -ne 'Valid') { throw "chromedriver signature is not valid" }
 
       - name: Real start of the app through the launcher
-        shell: pwsh
         run: |
           $p = Start-Process cmd.exe -ArgumentList '/c', 'START_PFA.bat' -WorkingDirectory $env:RELEASE_DIR -PassThru
           $ok = $false

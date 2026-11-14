@@ -118,6 +118,12 @@ def run_browser_tests():
     check("browser: Chrome starts via create_driver()", launch)
     if driver is None:
         return
+    if sys.platform == "win32":
+        def google_driver_used():
+            assert app.installed_chrome_version(), "Chrome version not detected"
+            path = str(driver.service.path)
+            assert "chromedriver-win64" in path and "PFA_Scout_Messenger" in path, path
+        check("browser: Google-signed chromedriver used, not selenium-manager", google_driver_used)
     try:
         for phone, expected in (
             ("972501111111", "כפתור שליחה"),  # לחיצה על הכפתור עובדת

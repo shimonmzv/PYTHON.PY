@@ -8,13 +8,17 @@ PFA Scout Messenger
     streamlit run app.py
 """
 
+import io
 import os
 import random
 import re
+import sys
 import time
+import zipfile
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
+from urllib.request import urlopen
 
 import pandas as pd
 import streamlit as st
@@ -26,6 +30,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     WebDriverException,
 )
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -62,6 +67,17 @@ CHROME_PROFILE_DIR = (
     Path(_LOCAL_DATA) / "PFA_Scout_Messenger" / "chrome_profile"
     if _LOCAL_DATA
     else Path(__file__).resolve().parent / "chrome_profile"
+)
+
+# ChromeDriver רשמי של Google (קובץ חתום), שמתאים לגרסת ה-Chrome המותקנת.
+# לא משתמשים ב-Selenium Manager כי הקובץ שלו (selenium-manager.exe) לא חתום,
+# ו-Smart App Control ב-Windows 11 חוסם אותו.
+CHROMEDRIVER_DIR = (
+    Path(_LOCAL_DATA) / "PFA_Scout_Messenger" / "chromedriver" if _LOCAL_DATA else None
+)
+CFT_LATEST_URL = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_{major}"
+CFT_DRIVER_URL = (
+    "https://storage.googleapis.com/chrome-for-testing-public/{version}/win64/chromedriver-win64.zip"
 )
 
 # רשימת ברכות פתיחה לגיוון הטקסט (Text Spinning)
@@ -193,18 +209,63 @@ def build_message(template: str, name: str) -> str:
 # אוטומציית דפדפן (Selenium)
 # ============================================================
 
+def installed_chrome_version() -> str | None:
+    """מחזיר את גרסת Google Chrome המותקנת ב-Windows (למשל '142.0.7444.59'), או None."""
+    if sys.platform != "win32":
+        return None
+    import winreg
+
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, r"Software\Google\Chrome\BLBeacon") as key:
+                return winreg.QueryValueEx(key, "version")[0]
+        except OSError:
+            pass
+    # גיבוי: תיקיית הגרסה שליד chrome.exe (Application\<version>)
+    versions = []
+    for base in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        app_dir = Path(os.environ.get(base, "")) / "Google" / "Chrome" / "Application"
+        versions += [p.name for p in app_dir.glob("*.*.*.*") if p.is_dir()]
+    if not versions:
+        return None
+    return max(versions, key=lambda v: tuple(int(x) for x in v.split(".") if x.isdigit()))
+
+
+def ensure_chromedriver() -> str | None:
+    """
+    מוריד (פעם אחת לכל גרסה ראשית של Chrome) את ה-ChromeDriver הרשמי והחתום של Google.
+    מחזיר את הנתיב ל-chromedriver.exe, או None אם לא הצליח — ואז Selenium Manager ינסה במקומו.
+    """
+    version = installed_chrome_version()
+    if not version or CHROMEDRIVER_DIR is None:
+        return None
+    major = version.split(".")[0]
+    driver_exe = CHROMEDRIVER_DIR / major / "chromedriver-win64" / "chromedriver.exe"
+    if driver_exe.exists():
+        return str(driver_exe)
+    try:
+        with urlopen(CFT_LATEST_URL.format(major=major), timeout=20) as resp:
+            driver_version = resp.read().decode().strip()
+        with urlopen(CFT_DRIVER_URL.format(version=driver_version), timeout=120) as resp:
+            archive = resp.read()
+        with zipfile.ZipFile(io.BytesIO(archive)) as zf:
+            zf.extractall(CHROMEDRIVER_DIR / major)
+    except (OSError, ValueError, zipfile.BadZipFile):
+        return None
+    return str(driver_exe) if driver_exe.exists() else None
+
+
 def create_driver() -> webdriver.Chrome:
-    """
-    מפעיל דפדפן Chrome גלוי (לא headless).
-    Selenium Manager (מגרסה 4.6 ומעלה) מוריד אוטומטית את ה-ChromeDriver המתאים.
-    """
+    """מפעיל דפדפן Chrome גלוי (לא headless) עם פרופיל קבוע."""
     CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
     options = webdriver.ChromeOptions()
     options.add_argument(f"--user-data-dir={CHROME_PROFILE_DIR}")
     options.add_argument("--start-maximized")
 
-    driver = webdriver.Chrome(options=options)
+    driver_path = ensure_chromedriver()
+    service = Service(executable_path=driver_path) if driver_path else Service()
+    driver = webdriver.Chrome(options=options, service=service)
     driver.implicitly_wait(0)  # כל ההמתנות מתבצעות במפורש עם WebDriverWait
     return driver
 
