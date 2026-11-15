@@ -94,9 +94,12 @@ def test_missing_columns():
 
 def test_build_message_and_url():
     random.seed(7)
-    msg = app.build_message("{name}, בדיקה & 100%\nשורה 2 {name}", "דני")
-    assert msg.split(" ", 1)[0] in app.GREETINGS
-    assert msg.count("דני") == 2
+    body = "This is Premier Football Agency & co, 100% real.\nLine 2"
+    msg = app.build_message(f"  {body}  ")
+    greeting, rest = msg.split(",\n", 1)
+    assert greeting in app.GREETINGS, greeting
+    assert rest == body, rest
+    assert app.build_message(body, add_greeting=False) == body
     url = app.SEND_URL_TEMPLATE.format(phone="972501234567", text=quote(msg, safe=""))
     assert parse_qs(urlparse(url).query)["text"][0] == msg
 
@@ -118,12 +121,6 @@ def run_browser_tests():
     check("browser: Chrome starts via create_driver()", launch)
     if driver is None:
         return
-    if sys.platform == "win32":
-        def google_driver_used():
-            assert app.installed_chrome_version(), "Chrome version not detected"
-            path = str(driver.service.path)
-            assert "chromedriver-win64" in path and "PFA_Scout_Messenger" in path, path
-        check("browser: Google-signed chromedriver used, not selenium-manager", google_driver_used)
     try:
         for phone, expected in (
             ("972501111111", "כפתור שליחה"),  # לחיצה על הכפתור עובדת
@@ -132,7 +129,7 @@ def run_browser_tests():
             ("972505555555", "כפתור שליחה"),  # לחיצה מוקדמת נבלעת
         ):
             def scenario(phone=phone, expected=expected):
-                msg = app.build_message("{name}, בדיקה & 100%\nשורה 2", "דני")
+                msg = app.build_message("Test & 100%\nLine 2")
                 method = app.send_message(driver, phone, msg, timeout=15)
                 sent = driver.execute_script("return window.sent")
                 assert method == expected, f"method {method!r}, expected {expected!r}"

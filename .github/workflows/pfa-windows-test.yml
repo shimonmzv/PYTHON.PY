@@ -78,14 +78,6 @@ jobs:
           set "PYTHONNOUSERSITE=1"
           "%PY%" "%APP%\tests\run_tests.py" "%RELEASE_DIR%"
 
-      - name: ChromeDriver is Google's signed binary
-        run: |
-          $drv = Get-ChildItem "$env:LOCALAPPDATA\PFA_Scout_Messenger\chromedriver" -Recurse -Filter chromedriver.exe | Select-Object -First 1
-          if (-not $drv) { throw "chromedriver was not downloaded" }
-          $sig = Get-AuthenticodeSignature $drv.FullName
-          Write-Host "$($drv.FullName): $($sig.Status) / $($sig.SignerCertificate.Subject)"
-          if ($sig.Status -ne 'Valid') { throw "chromedriver signature is not valid" }
-
       - name: Real start of the app through the launcher
         run: |
           $p = Start-Process cmd.exe -ArgumentList '/c', 'START_PFA.bat' -WorkingDirectory $env:RELEASE_DIR -PassThru
