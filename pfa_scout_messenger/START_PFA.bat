@@ -113,7 +113,9 @@ echo.
 echo KEEP THIS WINDOW OPEN while using the app. Close it to quit.
 echo.
 start "" powershell -NoProfile -WindowStyle Hidden -Command "$u='http://localhost:8501'; for ($i=0; $i -lt 90; $i++) { try { Invoke-WebRequest ($u + '/_stcore/health') -UseBasicParsing -TimeoutSec 2 | Out-Null; break } catch { Start-Sleep -Seconds 1 } }; Start-Process $u"
-"%PY%" -m streamlit run "%APP_DIR%app.py" --server.headless true --server.port 8501 --browser.gatherUsageStats false
+rem --global.developmentMode false: Streamlit turns on development mode when it is not
+rem installed in a "site-packages" folder (ours is runtime\libs), and then refuses to start.
+"%PY%" -m streamlit run "%APP_DIR%app.py" --server.headless true --server.port 8501 --browser.gatherUsageStats false --global.developmentMode false
 echo.
 echo The app has stopped.
 pause
