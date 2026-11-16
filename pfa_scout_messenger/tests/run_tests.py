@@ -9,7 +9,6 @@ APP_DIR — התיקייה שבה נמצא app.py (ברירת מחדל: תיקי
 """
 
 import io
-import random
 import sys
 import tempfile
 import time
@@ -93,13 +92,9 @@ def test_missing_columns():
 
 
 def test_build_message_and_url():
-    random.seed(7)
     body = "This is Premier Football Agency & co, 100% real.\nLine 2"
-    msg = app.build_message(f"  {body}  ")
-    greeting, rest = msg.split(",\n", 1)
-    assert greeting in app.GREETINGS, greeting
-    assert rest == body, rest
-    assert app.build_message(body, add_greeting=False) == body
+    msg = app.build_message(f"  {body}  \n")
+    assert msg == body, msg  # נשלח בדיוק הטקסט שנכתב, בלי תוספות
     url = app.SEND_URL_TEMPLATE.format(phone="972501234567", text=quote(msg, safe=""))
     assert parse_qs(urlparse(url).query)["text"][0] == msg
 

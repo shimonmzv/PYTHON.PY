@@ -65,9 +65,6 @@ CHROME_PROFILE_DIR = (
     else Path(__file__).resolve().parent / "chrome_profile"
 )
 
-# ברכות פתיחה (באנגלית) לגיוון הטקסט (Text Spinning): כל הסקאוטים מקבלים אותה הודעה,
-# והברכה האקראית בשורה הראשונה היא מה שמונע שליחה של אותו טקסט בדיוק שוב ושוב
-GREETINGS = ["Hi", "Hello", "Hey", "Hi there", "Hello there"]
 
 # הפסקה בין הודעות (בשניות) אחרי כל שליחה מוצלחת — מנגנון נגד ספאם.
 # ברירת המחדל ניתנת לשינוי בממשק; בפועל ההפסקה משתנה אקראית ב-±DELAY_JITTER_SECONDS
@@ -184,15 +181,9 @@ def load_contacts(uploaded_file) -> tuple[pd.DataFrame, list[str]]:
     return pd.DataFrame(clean_rows, columns=["Name", "Phone"]), warnings
 
 
-def build_message(message: str, add_greeting: bool = True) -> str:
-    """
-    בונה את ההודעה לשליחה: אותו טקסט לכולם, ועם add_greeting מוסיף בשורה הראשונה
-    ברכת פתיחה אקראית באנגלית (Text Spinning), למשל "Hello,".
-    """
-    body = message.strip()
-    if not add_greeting:
-        return body
-    return f"{random.choice(GREETINGS)},\n{body}"
+def build_message(message: str) -> str:
+    """בונה את ההודעה לשליחה: אותו טקסט לכל הסקאוטים, בלי רווחים מיותרים בקצוות."""
+    return message.strip()
 
 
 # ============================================================
@@ -379,7 +370,6 @@ def wait_for_login(driver, seconds: int, box, log: LiveLog) -> None:
 def run_automation(
     contacts: pd.DataFrame,
     message_text: str,
-    add_greeting: bool,
     initial_delay: int,
     chat_timeout: int,
     delay_seconds: int,
@@ -418,7 +408,7 @@ def run_automation(
         ):
             status_box.info(f"🔄 שולח הודעה {index} מתוך {total}...")
             current_box.info(f"📤 מעבד כעת: **{name}** — `{phone}` ({index}/{total})")
-            message = build_message(message_text, add_greeting)
+            message = build_message(message_text)
 
             try:
                 method = send_message(driver, phone, message, chat_timeout)
@@ -542,19 +532,13 @@ def main() -> None:
         value=DEFAULT_MESSAGE,
         height=160,
     )
-    add_greeting = st.checkbox(
-        f"הוסף ברכת פתיחה אקראית בשורה הראשונה ({' / '.join(GREETINGS)})",
-        value=True,
-        help="כך ההודעות לא זהות לגמרי זו לזו, מה שמקטין את הסיכון לחסימה. "
-        "אם ההודעה שלך כבר נפתחת בברכה, בטל את הסימון.",
-    )
 
     if message_text.strip():
         with st.expander("👁️ תצוגה מקדימה"):
             st.markdown(
                 '<div class="message-preview">'
                 # <br> ולא שורות חדשות: שורה ריקה הייתה שוברת את בלוק ה-HTML ב-Markdown
-                + html.escape(build_message(message_text, add_greeting)).replace("\n", "<br>")
+                + html.escape(build_message(message_text)).replace("\n", "<br>")
                 + "</div>",
                 unsafe_allow_html=True,
             )
@@ -619,7 +603,6 @@ def main() -> None:
         run_automation(
             contacts,
             message_text,
-            add_greeting,
             int(initial_delay),
             int(chat_timeout),
             int(delay_seconds),
