@@ -69,8 +69,11 @@ CHROME_PROFILE_DIR = (
 # והברכה האקראית בשורה הראשונה היא מה שמונע שליחה של אותו טקסט בדיוק שוב ושוב
 GREETINGS = ["Hi", "Hello", "Hey", "Hi there", "Hello there"]
 
-# טווח ההשהיה האקראית (בשניות) אחרי כל הודעה שנשלחה בהצלחה — מנגנון נגד ספאם
-ANTI_SPAM_DELAY_RANGE = (25, 45)
+# הפסקה בין הודעות (בשניות) אחרי כל שליחה מוצלחת — מנגנון נגד ספאם.
+# ברירת המחדל ניתנת לשינוי בממשק; בפועל ההפסקה משתנה אקראית ב-±DELAY_JITTER_SECONDS
+# סביב הערך, כדי שהקצב לא ייראה אוטומטי (הפסקה זהה בדיוק בכל פעם היא דפוס של בוט).
+DEFAULT_DELAY_SECONDS = 30
+DELAY_JITTER_SECONDS = 5
 
 # השהיה קצרה אחרי כישלון, כדי לא להעמיס על WhatsApp Web
 FAILURE_PAUSE_SECONDS = 5
@@ -379,6 +382,7 @@ def run_automation(
     add_greeting: bool,
     initial_delay: int,
     chat_timeout: int,
+    delay_seconds: int,
     results: list[dict],
 ) -> None:
     """
@@ -445,7 +449,10 @@ def run_automation(
 
                 # השהיה אקראית נגד ספאם אחרי כל שליחה מוצלחת (לא אחרי האחרונה)
                 if index < total:
-                    delay = random.uniform(*ANTI_SPAM_DELAY_RANGE)
+                    delay = random.uniform(
+                        max(0, delay_seconds - DELAY_JITTER_SECONDS),
+                        delay_seconds + DELAY_JITTER_SECONDS,
+                    )
                     log.wait(f"השהיה נגד ספאם: {delay:.0f} שניות לפני ההודעה הבאה.")
                     countdown(delay, current_box, "השהיה נגד ספאם")
 
@@ -554,6 +561,15 @@ def main() -> None:
 
     # --- שלב 3: הגדרות ---
     st.subheader("3. הגדרות")
+    delay_seconds = st.number_input(
+        "הפסקה בין הודעות (שניות)",
+        min_value=10,
+        max_value=600,
+        value=DEFAULT_DELAY_SECONDS,
+        step=5,
+        help=f"בפועל ההפסקה משתנה אקראית ב-±{DELAY_JITTER_SECONDS} שניות סביב הערך, "
+        "כדי שהקצב לא ייראה אוטומטי. הפסקה קצרה יותר מגדילה את הסיכון לחסימה.",
+    )
     initial_delay = st.number_input(
         "השהיה ראשונית לסריקת קוד QR (שניות)",
         min_value=0,
@@ -575,12 +591,14 @@ def main() -> None:
     # --- שלב 4: הפעלה ---
     st.subheader("4. הפעלה")
     ready = contacts is not None and not contacts.empty and bool(message_text.strip())
-    min_delay, max_delay = ANTI_SPAM_DELAY_RANGE
     if ready:
+        # בנוסף להפסקה, טעינת כל צ'אט ושליחה לוקחות בערך 10 שניות
+        minutes = max(1, round(len(contacts) * (int(delay_seconds) + 10) / 60))
+        duration = "כדקה" if minutes == 1 else f"כ-{minutes} דקות"
         st.info(
-            f"בין הודעה להודעה תהיה השהיה אקראית של {min_delay}–{max_delay} שניות. "
-            f"זמן ריצה משוער ל-{len(contacts)} סקאוטים: כ-"
-            f"{len(contacts) * (min_delay + max_delay) / 2 / 60:.0f} דקות ומעלה. "
+            f"בין הודעה להודעה תהיה הפסקה של כ-{int(delay_seconds)} שניות "
+            f"(±{DELAY_JITTER_SECONDS}). זמן ריצה משוער ל-{len(contacts)} סקאוטים: "
+            f"{duration}. "
             "אל תסגור את חלון הכרום ואל תשתמש בו במהלך הריצה."
         )
 
@@ -604,6 +622,7 @@ def main() -> None:
             add_greeting,
             int(initial_delay),
             int(chat_timeout),
+            int(delay_seconds),
             st.session_state["results"],
         )
         st.session_state["running"] = False
